@@ -1,0 +1,354 @@
+FAMA CABA
+
+Piso 10
+--------------------------------------
+Switch 1
+enable
+configure terminal
+vlan 10
+name Administracion
+vlan 20
+name Sistemas
+vlan 30 
+name Produccion
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 1/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 2/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 3/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 4/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 5/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 6/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 7/1
+ switchport mode trunk
+exit
+copy running-config startup-config
+
+Switch2-P10-SIST(1)
+________________________
+enable
+configure terminal
+
+vlan 20
+ name Sistemas
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 20
+exit
+
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+------------------------
+Switch2-P10-SIST(2)
+________________________
+enable
+configure terminal
+
+vlan 20
+ name Sistemas
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 20
+exit
+
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+------------------------
+Switch2-P10-SERV
+________________________
+enable
+configure terminal
+
+vlan 20
+ name Sistemas
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 20
+exit
+
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+------------------------
+Switch1-P10-ADM
+________________________
+enable
+configure terminal
+
+vlan 10
+ name Administracion
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 10
+exit
+
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+------------------------
+Switch1-P10-ADM(1)
+________________________
+enable
+configure terminal
+
+vlan 10
+ name Administracion
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 10
+exit
+
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+------------------------
+Switch1-P10-ADM(2)
+enable
+configure terminal
+
+vlan 10
+ name Administracion
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 10
+exit
+
+interface fa0/2
+ switchport mode access
+ switchport access vlan 10
+exit
+
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Piso 1
+-----------------------------------------
+Switch 2
+____________
+enable
+configure terminal
+vlan 10
+name Administracion
+vlan 20
+name Sistemas
+vlan 30 
+name Produccion
+interface gigabitEthernet 0/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 1/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 2/1
+ switchport mode trunk
+exit
+interface gigabitEthernet 3/1
+ switchport mode trunk
+exit
+copy running-config startup-config
+---------------------------------------------
+
+Switch4-P1-ADM
+____________
+enable
+configure terminal
+vlan 10
+name Administracion
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 10
+exit
+
+interface fa0/2
+ switchport mode access
+ switchport access vlan 10
+exit
+
+interface ge0/1
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+-----------------------------------------------------------
+
+Switch5-P1-PROD
+____________
+enable
+configure terminal
+
+vlan 30 
+name Produccion
+
+interface fa0/1
+ switchport mode access
+ switchport access vlan 30
+exit
+
+interface gigabitEthernet 0/0
+ switchport mode trunk
+exit
+
+copy running-config startup-config
+---------------------------------------------------------------
+
+//////////////////////////////
+
+router caba
+
+//////////////////////////////
+
+enable
+configure terminal
+
+interface GigabitEthernet 0/0
+ no shutdown
+
+interface GigabitEthernet 0/0.10
+ encapsulation dot1Q 10
+ ip address 172.16.29.1 255.255.255.192
+ ip helper-address 172.16.29.66   ! Reenvía DHCP a servidor
+
+interface GigabitEthernet 0/0.20
+ encapsulation dot1Q 20
+ ip address 172.16.29.65 255.255.255.192
+
+interface GigabitEthernet 0/1
+ no shutdown
+
+interface GigabitEthernet 0/1.30
+ encapsulation dot1Q 30
+ ip address 172.16.29.129 255.255.255.224
+ ip helper-address 172.16.29.66   
+
+interface Serial 0/0/1
+ ip address 172.16.29.193 255.255.255.252
+ no shutdown
+
+ip route 172.16.29.160 255.255.255.224 172.16.29.194
+
+copy running-config startup-config
+
+
+//////////////////////////////////////
+
+router sta fe
+
+//////////////////////////////////////////
+
+
+enable
+configure terminal
+
+interface GigabitEthernet 0/0
+ ip address 172.16.29.161 255.255.255.224
+ ip helper-address 172.16.29.66
+ no shutdown
+
+interface Serial 0/0/0
+ ip address 172.16.29.194 255.255.255.252
+ clock rate 64000      
+ no shutdown
+
+ip route 0.0.0.0 0.0.0.0 172.16.29.193
+
+copy running-config startup-config
+
+Reconstruccion configuracion NAT router caba
+
+enable
+configure terminal
+
+! --- INTERFAZ EXTERNA (HACIA INTERNET) ---
+! Asignamos una IP del bloque público y la marcamos como "outside"
+interface Serial0/0/0
+ description Conexion a INTERNET
+ ip address 200.45.110.129 255.255.255.128
+ ip nat outside
+ no shutdown
+exit
+
+! --- INTERFACES INTERNAS ---
+! Marcamos cada subinterfaz de las VLANs como "inside"
+interface GigabitEthernet0/0.10
+ ip nat inside
+exit
+
+interface GigabitEthernet0/0.20
+ ip nat inside
+exit
+
+interface GigabitEthernet0/1.30
+ ip nat inside
+exit
+
+! También marcamos la interfaz que va hacia Santa Fe como "inside"
+interface Serial0/0/1
+ ip nat inside
+exit
+
+! Creamos la Access-List 1 que permite a toda la red 172.16.29.0/24
+access-list 1 permit 172.16.29.0 0.0.0.255
+
+! Traduce cualquier IP permitida por la ACL 1 a la IP de la interfaz Serial0/0/0
+! La palabra "overload" es la que activa el PAT.
+ip nat inside source list 1 interface Serial0/0/0 overload
+
+! Mapea la IP privada del servidor (172.16.29.66) a la IP pública (200.45.110.130)
+ip nat inside source static 172.16.29.66 200.45.110.130
+
+! Ruta estática por defecto que apunta a la interfaz de salida a Internet
+ip route 0.0.0.0 0.0.0.0 Serial0/0/0
+
+Router Internet
+
+enable
+configure terminal
+
+! Ingresamos a la interfaz que se conecta con FAMA
+interface Serial0/0
+ description Conexion a FAMA SRL
+ ! Asignamos una IP del mismo rango que el Router CABA
+ ip address 200.45.110.131 255.255.255.128
+ no shutdown
+exit
+
+! Le decimos: "Para llegar a cualquier IP de la red 200.45.110.128/25,
+! envía los paquetes a la IP del Router CABA (200.45.110.129)".
+ip route 200.45.110.128 255.255.255.128 200.45.110.129
